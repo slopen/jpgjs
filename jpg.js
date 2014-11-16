@@ -806,13 +806,15 @@ var JpegImage = (function jpegImage() {
       var colorTransform;
       var numComponents = this.components.length;
       var dataLength = width * height * numComponents;
-      var data = new Uint8Array(dataLength);
+      if (!this.getDataData) this.getDataData = new Uint8Array(dataLength);
+      var data = this.getDataData;
       var componentLine;
 
       // lineData is reused for all components. Assume first component is
       // the biggest
-      var lineData = new Uint8Array((this.components[0].blocksPerLine << 3) *
+      if (!this.getDataLineData) this.getDataLineData = new Uint8Array((this.components[0].blocksPerLine << 3) *
                                     this.components[0].blocksPerColumn * 8);
+      var lineData = this.getDataLineData;
 
       // First construct image data ...
       for (i = 0; i < numComponents; i++) {
@@ -921,7 +923,11 @@ var JpegImage = (function jpegImage() {
     copyToImageData: function copyToImageData(imageData) {
       var width = imageData.width, height = imageData.height;
       var imageDataBytes = width * height * 4;
-      var imageDataArray = imageData.data;
+
+      if (!this.copyImageDataArray) this.copyImageDataArray = new ArrayBuffer(imageDataBytes);
+      if (!this.copyImageDataClamped) this.copyImageDataClamped = new Uint8ClampedArray(this.copyImageDataArray);
+      var imageDataArray = this.copyImageDataClamped;
+
       var data = this.getData(width, height);
       var i = 0, j = 0, k0, k1;
       var Y, K, C, M, R, G, B;
@@ -972,6 +978,8 @@ var JpegImage = (function jpegImage() {
         default:
           throw 'Unsupported color mode';
       }
+
+      imageData.data.set(imageDataArray);
     }
   };
 
